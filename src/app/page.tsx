@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SiteHeader } from "@/components/layout/site-header";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { ScoreCharts } from "@/components/dashboard/score-charts";
@@ -27,6 +29,37 @@ export default async function HomePage({
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+        {/* Admin access */}
+        <div className="flex justify-end">
+          <Link
+            href="/admin"
+            className="
+              inline-flex
+              items-center
+              rounded-lg
+              border border-zinc-200
+              bg-white
+              px-3
+              py-2
+              text-sm
+              font-medium
+              text-zinc-700
+              shadow-sm
+              transition-colors
+              hover:bg-zinc-50
+              hover:text-zinc-950
+              dark:border-zinc-700
+              dark:bg-zinc-900
+              dark:text-zinc-300
+              dark:hover:bg-zinc-800
+              dark:hover:text-white
+            "
+          >
+            Admin Login
+          </Link>
+        </div>
+
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Total Students"
