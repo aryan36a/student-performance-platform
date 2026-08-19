@@ -10,7 +10,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const palette = [
   "#111827",
@@ -29,18 +35,23 @@ function ChartCard({
   xKey,
   yKey,
   maxValue,
+  isPercentage = false,
 }: {
   title: string;
   data: Item[];
   xKey: string;
   yKey: string;
   maxValue?: number;
+  isPercentage?: boolean;
 }) {
   /*
-   * Give each row enough vertical space so that long labels
-   * don't overlap each other.
+   * Give each row enough vertical space so that
+   * long labels don't overlap.
    */
-  const chartHeight = Math.max(280, data.length * 52 + 60);
+  const chartHeight = Math.max(
+    280,
+    data.length * 52 + 60,
+  );
 
   return (
     <Card>
@@ -50,7 +61,10 @@ function ChartCard({
 
       <CardContent className="p-4">
         <div style={{ height: chartHeight }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
             <BarChart
               data={data}
               layout="vertical"
@@ -61,13 +75,20 @@ function ChartCard({
                 left: 8,
               }}
             >
+              {/* =================================================
+                  GRID
+                  ================================================= */}
+
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#e4e4e7"
                 horizontal={false}
               />
 
-              {/* Numeric axis */}
+              {/* =================================================
+                  NUMERIC AXIS
+                  ================================================= */}
+
               <XAxis
                 type="number"
                 domain={
@@ -75,6 +96,14 @@ function ChartCard({
                     ? [0, maxValue]
                     : [0, "dataMax"]
                 }
+                tickFormatter={(value) => {
+                  const numericValue =
+                    Number(value);
+
+                  return isPercentage
+                    ? `${numericValue.toFixed(0)}%`
+                    : numericValue.toFixed(0);
+                }}
                 tick={{
                   fill: "#52525b",
                   fontSize: 12,
@@ -87,7 +116,10 @@ function ChartCard({
                 }}
               />
 
-              {/* Category axis */}
+              {/* =================================================
+                  CATEGORY AXIS
+                  ================================================= */}
+
               <YAxis
                 type="category"
                 dataKey={xKey}
@@ -103,7 +135,23 @@ function ChartCard({
                 tickLine={false}
               />
 
+              {/* =================================================
+                  TOOLTIP
+                  ================================================= */}
+
               <Tooltip
+                formatter={(value) => {
+                  const numericValue =
+                    Number(value);
+
+                  if (Number.isNaN(numericValue)) {
+                    return value;
+                  }
+
+                  return isPercentage
+                    ? `${numericValue.toFixed(2)}%`
+                    : numericValue.toFixed(2);
+                }}
                 contentStyle={{
                   borderRadius: 6,
                   border: "1px solid #e4e4e7",
@@ -111,6 +159,10 @@ function ChartCard({
                   fontSize: "12px",
                 }}
               />
+
+              {/* =================================================
+                  BARS
+                  ================================================= */}
 
               <Bar
                 dataKey={yKey}
@@ -120,7 +172,11 @@ function ChartCard({
                 {data.map((_, idx) => (
                   <Cell
                     key={`cell-${idx}`}
-                    fill={palette[idx % palette.length]}
+                    fill={
+                      palette[
+                        idx % palette.length
+                      ]
+                    }
                   />
                 ))}
               </Bar>
@@ -137,15 +193,58 @@ export function ScoreCharts({
   subjects,
   branch,
   division,
+  isAllTime,
 }: {
-  histogram: { range: string; count: number }[];
-  subjects: { subject: string; average: number }[];
-  branch: { label: string; average: number }[];
-  division: { label: string; average: number }[];
+  histogram: {
+    range: string;
+    count: number;
+  }[];
+
+  subjects: {
+    subject: string;
+    average: number;
+  }[];
+
+  branch: {
+    label: string;
+    average: number;
+  }[];
+
+  division: {
+    label: string;
+    average: number;
+  }[];
+
+  isAllTime: boolean;
 }) {
+  /*
+   * IMPORTANT:
+   *
+   * The data returned for All Time is already normalized
+   * to percentages.
+   *
+   * Therefore:
+   *
+   *     64.45 means 64.45%
+   *
+   * NOT:
+   *
+   *     64.45 / 10 * 100
+   *
+   * We only change the display/axis here.
+   */
+
+  const subjectData = subjects;
+  const branchData = branch;
+  const divisionData = division;
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {/* Score Distribution */}
+
+      {/* =====================================================
+          SCORE DISTRIBUTION
+          ===================================================== */}
+
       <ChartCard
         title="Score Distribution"
         data={histogram}
@@ -153,32 +252,57 @@ export function ScoreCharts({
         yKey="count"
       />
 
-      {/* Subject Performance */}
+      {/* =====================================================
+          SUBJECT PERFORMANCE
+          ===================================================== */}
+
       <ChartCard
         title="Subject Performance"
-        data={subjects}
+        data={subjectData}
         xKey="subject"
         yKey="average"
-        maxValue={20}
+        maxValue={
+          isAllTime
+            ? 100
+            : 20
+        }
+        isPercentage={isAllTime}
       />
 
-      {/* Branch Performance */}
+      {/* =====================================================
+          BRANCH PERFORMANCE
+          ===================================================== */}
+
       <ChartCard
         title="Branch Performance"
-        data={branch}
+        data={branchData}
         xKey="label"
         yKey="average"
-        maxValue={70}
+        maxValue={
+          isAllTime
+            ? 100
+            : 70
+        }
+        isPercentage={isAllTime}
       />
 
-      {/* Division Performance */}
+      {/* =====================================================
+          DIVISION PERFORMANCE
+          ===================================================== */}
+
       <ChartCard
         title="Division Performance"
-        data={division}
+        data={divisionData}
         xKey="label"
         yKey="average"
-        maxValue={70}
+        maxValue={
+          isAllTime
+            ? 100
+            : 70
+        }
+        isPercentage={isAllTime}
       />
+
     </div>
   );
 }

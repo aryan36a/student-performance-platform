@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { SiteHeader } from "@/components/layout/site-header";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { ScoreCharts } from "@/components/dashboard/score-charts";
@@ -19,10 +17,64 @@ export default async function HomePage({
   const params = await searchParams;
   const importId = params.test;
 
+  /*
+   * All Time means there is no specific test selected.
+   */
+  const isAllTime =
+    !importId || importId === "all";
+
   const [overview, dashboard] = await Promise.all([
     getOverviewMetrics(importId),
     getDashboardAnalytics(importId),
   ]);
+
+  /*
+   * Convert a score into a percentage.
+   *
+   * Overall score:
+   * 70 marks maximum.
+   *
+   * Individual subjects:
+   * handled separately inside ScoreCharts.
+   */
+  const toPercentage = (
+    value: number,
+    max: number,
+  ) => {
+    if (max <= 0) return 0;
+
+    return (value / max) * 100;
+  };
+
+  const averageScore = isAllTime
+    ? toPercentage(overview.averageScore, 70)
+    : overview.averageScore;
+
+  const highestScore = isAllTime
+    ? toPercentage(overview.highestScore, 70)
+    : overview.highestScore;
+
+  const lowestScore = isAllTime
+    ? toPercentage(overview.lowestScore, 70)
+    : overview.lowestScore;
+
+  const avgCoding = isAllTime
+    ? toPercentage(overview.avgCoding, 20)
+    : overview.avgCoding;
+
+  const avgLogicalReasoning = isAllTime
+    ? toPercentage(
+        overview.avgLogicalReasoning,
+        10,
+      )
+    : overview.avgLogicalReasoning;
+
+  const avgQuantitativeAptitude = isAllTime
+    ? toPercentage(
+        overview.avgQuantitativeAptitude,
+        10,
+      )
+    : overview.avgQuantitativeAptitude;
 
   return (
     <>
@@ -30,37 +82,12 @@ export default async function HomePage({
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
 
-        {/* Admin access */}
-        <div className="flex justify-end">
-          <Link
-            href="/admin"
-            className="
-              inline-flex
-              items-center
-              rounded-lg
-              border border-zinc-200
-              bg-white
-              px-3
-              py-2
-              text-sm
-              font-medium
-              text-zinc-700
-              shadow-sm
-              transition-colors
-              hover:bg-zinc-50
-              hover:text-zinc-950
-              dark:border-zinc-700
-              dark:bg-zinc-900
-              dark:text-zinc-300
-              dark:hover:bg-zinc-800
-              dark:hover:text-white
-            "
-          >
-            Admin Login
-          </Link>
-        </div>
+        {/* =====================================================
+            OVERVIEW METRICS
+            ===================================================== */}
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
           <MetricCard
             label="Total Students"
             value={`${overview.totalStudents}`}
@@ -68,34 +95,63 @@ export default async function HomePage({
 
           <MetricCard
             label="Average Score"
-            value={overview.averageScore.toFixed(2)}
+            value={
+              isAllTime
+                ? `${averageScore.toFixed(2)}%`
+                : averageScore.toFixed(2)
+            }
           />
 
           <MetricCard
             label="Highest Score"
-            value={overview.highestScore.toFixed(2)}
+            value={
+              isAllTime
+                ? `${highestScore.toFixed(2)}%`
+                : highestScore.toFixed(2)
+            }
           />
 
           <MetricCard
             label="Lowest Score"
-            value={overview.lowestScore.toFixed(2)}
+            value={
+              isAllTime
+                ? `${lowestScore.toFixed(2)}%`
+                : lowestScore.toFixed(2)
+            }
           />
 
           <MetricCard
             label="Average Coding"
-            value={overview.avgCoding.toFixed(2)}
+            value={
+              isAllTime
+                ? `${avgCoding.toFixed(2)}%`
+                : avgCoding.toFixed(2)
+            }
           />
 
           <MetricCard
             label="Average Logical Reasoning"
-            value={overview.avgLogicalReasoning.toFixed(2)}
+            value={
+              isAllTime
+                ? `${avgLogicalReasoning.toFixed(2)}%`
+                : avgLogicalReasoning.toFixed(2)
+            }
           />
 
           <MetricCard
             label="Average Quantitative Aptitude"
-            value={overview.avgQuantitativeAptitude.toFixed(2)}
+            value={
+              isAllTime
+                ? `${avgQuantitativeAptitude.toFixed(2)}%`
+                : avgQuantitativeAptitude.toFixed(2)
+            }
           />
+
         </section>
+
+        {/* =====================================================
+            CHARTS
+            ===================================================== */}
 
         {dashboard.students.length === 0 ? (
           <EmptyState
@@ -108,8 +164,10 @@ export default async function HomePage({
             subjects={dashboard.subjectAverages}
             branch={dashboard.branchAverages}
             division={dashboard.divisionAverages}
+            isAllTime={isAllTime}
           />
         )}
+
       </main>
     </>
   );
